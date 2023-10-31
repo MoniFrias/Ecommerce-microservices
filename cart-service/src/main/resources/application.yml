@@ -1,13 +1,17 @@
-server:
-  port: 8083
-# Show error message
-  error:
-    include-message: always
-# Connection url for our DB
+# Fetching config from server at : http://localhost:8090
 spring:
+  application:
+    name: cart-service
+  cloud:
+    config:
+      uri: http://localhost:8090
+  config:
+    import: optional:configserver:http://localhost:8090
+
+
+# Connection url for our DB
   datasource:
     url: jdbc:mysql://localhost:3306/ecommerce_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrival=true
-# User and password to login
     username: root
     password: root03
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -16,3 +20,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+# Show error message
+server:
+  error:
+    include-message: always
