@@ -3,6 +3,8 @@ package com.mf.cartservice.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +23,7 @@ import com.mf.cartservice.dto.response.Response;
 import com.mf.cartservice.entity.CartItem;
 import com.mf.cartservice.service.CartService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -30,36 +33,42 @@ import lombok.RequiredArgsConstructor;
 public class CartController {
 	
 	private final CartService cartService;
+	private Logger logger = LoggerFactory.getLogger(CartController.class);
 	
 	@GetMapping("/validateIfExistsCart/{idcart}")
 	public boolean validateIfExistsCart (@PathVariable Long idcart) {
 		return cartService.validateIfExistsCart(idcart);
 	}
 	
+	@CircuitBreaker(name = "createCart", fallbackMethod = "fallBackOpenfeignClients")
 	@PostMapping("/createCart")
 	public ResponseEntity<Response> createCart (@RequestParam Long iduser) {
 		Response response = cartService.createCart(iduser);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}	
 
+	@CircuitBreaker(name = "addProductToCart", fallbackMethod = "fallBackOpenfeignClients")
 	@PostMapping("/addProductToCart")
 	public ResponseEntity<Response> addProductToCart (@RequestBody AddProductRequestDto addProductRequestDTO, HttpServletRequest request) {
 		Response response = cartService.addProductToCart(addProductRequestDTO, request.getHeader("Authorization"));
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 	
+	@CircuitBreaker(name = "increaseQuantity", fallbackMethod = "fallBackOpenfeignClients")
 	@PostMapping("/increaseQuantity")
 	public ResponseEntity<Response> increaseProductQuantityFromCart (@RequestParam Long idcart, @RequestParam Long idproduct, HttpServletRequest request) {
 		Response response =  cartService.increaseProductQuantityFromCart(idcart, idproduct, request.getHeader("Authorization"));
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+	@CircuitBreaker(name = "decreaseQuantity", fallbackMethod = "fallBackOpenfeignClients")
 	@PostMapping("/decreaseQuantity")
 	public ResponseEntity<Response> decreaseProductQuantityFromCart (@RequestParam Long idcart, @RequestParam Long idproduct, HttpServletRequest request) {
 		Response response = cartService.decreaseProductQuantityFromCart(idcart, idproduct, request.getHeader("Authorization"));
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+	@CircuitBreaker(name = "getAllCartItems", fallbackMethod = "fallBackOpenfeignClients")
 	@GetMapping("/getAllCartItems")
 	public List<CartResponseDTO> getallCartItems (@RequestParam Long idcart, HttpServletRequest request) {
 		return cartService.getallCartItems(idcart, request.getHeader("Authorization"));
@@ -87,4 +96,8 @@ public class CartController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	private ResponseEntity<String> fallBackOpenfeignClients(RuntimeException ex){
+		logger.info("Fallback is executed because open feign client is down ", ex.getMessage());
+		return new ResponseEntity<>("Oops! Something went wrong, please try again later!", HttpStatus.OK);
+	}	
 }
