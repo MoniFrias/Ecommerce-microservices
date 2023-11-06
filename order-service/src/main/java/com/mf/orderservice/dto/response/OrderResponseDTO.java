@@ -14,10 +14,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OrderResponseDTO {
 
-	private String message;
 	private String ordernumber;
 	private StatusOrder orderstatus;
 	private StatusOrder paymentstatus;
 	private BigDecimal totalorderprice;
-	private List<OrderItemsResponseDTO> items;
+	private List<OrderItemsResponseDTO> items;	
 }

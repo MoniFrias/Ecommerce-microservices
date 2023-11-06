@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mf.cartservice.dto.request.AddProductRequestDto;
-import com.mf.cartservice.dto.response.CartResponseDTO;
 import com.mf.cartservice.dto.response.Response;
 import com.mf.cartservice.entity.CartItem;
 import com.mf.cartservice.service.CartService;
@@ -66,12 +65,13 @@ public class CartController {
 	public ResponseEntity<Response> decreaseProductQuantityFromCart (@RequestParam Long idcart, @RequestParam Long idproduct, HttpServletRequest request) {
 		Response response = cartService.decreaseProductQuantityFromCart(idcart, idproduct, request.getHeader("Authorization"));
 		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+	}	
 	
 	@CircuitBreaker(name = "getAllCartItems", fallbackMethod = "fallBackOpenfeignClients")
 	@GetMapping("/getAllCartItems")
-	public List<CartResponseDTO> getallCartItems (@RequestParam Long idcart, HttpServletRequest request) {
-		return cartService.getallCartItems(idcart, request.getHeader("Authorization"));
+	public ResponseEntity<Response> getallCartItems (@RequestParam Long idcart, HttpServletRequest request) {
+		Response response = cartService.getallCartItems(idcart, request.getHeader("Authorization"));
+		return new ResponseEntity<>(response, HttpStatus.OK); 
 	}
 
 	@GetMapping("/getallItems")
@@ -96,8 +96,8 @@ public class CartController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	private ResponseEntity<String> fallBackOpenfeignClients(RuntimeException ex){
-		logger.info("Fallback is executed because open feign client is down ", ex.getMessage());
-		return new ResponseEntity<>("Oops! Something went wrong, please try again later!", HttpStatus.OK);
+	private ResponseEntity<String> fallBackOpenfeignClients(RuntimeException ex) {
+		logger.info("FallbackCart is executed because open feign client is down ", ex.getMessage());
+		return new ResponseEntity<>("FallbackCart- Oops! Something went wrong, please try again later!", HttpStatus.NOT_FOUND);
 	}	
 }

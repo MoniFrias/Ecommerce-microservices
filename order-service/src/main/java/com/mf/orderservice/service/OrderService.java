@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.mf.orderservice.dto.Mapper;
 import com.mf.orderservice.dto.response.OrderItemsResponseDTO;
 import com.mf.orderservice.dto.response.OrderResponseDTO;
+import com.mf.orderservice.dto.response.Response;
 import com.mf.orderservice.entity.Order;
 import com.mf.orderservice.entity.StatusOrder;
 import com.mf.orderservice.exception.ValidationException;
@@ -32,78 +33,73 @@ public class OrderService {
 	private final Mapper mapper;
 	private static Logger logger = LogManager.getLogger(OrderService.class);
 
-	public OrderResponseDTO createOrder(Long idcart, String token) {
+	public Response createOrder(Long idcart, String token) {
 		boolean existCart = cartFeignClient.validateIfExistsCart(idcart);
 		BigDecimal totalOrderPrice = BigDecimal.ZERO;
 
 		if (existCart) {
-			try {
-				List<OrderItemsResponseDTO> items = getItemsWithProductInformation(idcart, "Pending", token);
-
-				for (OrderItemsResponseDTO item : items) {
-					totalOrderPrice = totalOrderPrice.add(item.getTotalPrice());
-					productFeignClient.updateStockOrder(item.getProductQuantity(), item.getSku(), "createOrder", token);
-				}
-
-				Order order = mapper.mapperOrder(idcart, totalOrderPrice);
-				OrderResponseDTO orderResponse = mapper.mapperToOrderResponseDto(order, totalOrderPrice, items);
-				orderRepository.save(order);
-				cartFeignClient.updateOrderNumber(idcart, order.getOrdernumber());
-				logger.info("Order created successfully");
-				return orderResponse;
-			} catch (Exception e) {
-				throw new ValidationException("The cart is empty");
+			List<OrderItemsResponseDTO> items = getItemsWithProductInformation(idcart, "Pending", token);
+			for (OrderItemsResponseDTO item : items) {
+				totalOrderPrice = totalOrderPrice.add(item.getTotalPrice());
+				productFeignClient.updateStockOrder(item.getProductQuantity(), item.getSku(), "createOrder", token);
 			}
 
+			Order order = mapper.mapperOrder(idcart, totalOrderPrice);
+			OrderResponseDTO orderResponse = mapper.mapperToOrderResponseDto(order, totalOrderPrice, items);
+			orderRepository.save(order);
+			cartFeignClient.updateOrderNumber(idcart, order.getOrdernumber());
+			logger.info("Order created successfully");
+			Response response = new Response("Order created successfully", orderResponse);
+			return response;
 		}
 		throw new ValidationException("Does not exists cart with id: " + idcart);
 	}
 
 	private List<OrderItemsResponseDTO> getItemsWithProductInformation(Long idcart, String ordernumber, String token) {
 		List<OrderItemsResponseDTO> items = cartFeignClient.getallItems(idcart, ordernumber).stream().map(item -> {
-			try {
-				Product product = productFeignClient.getProductById(item.getIdproduct(), token);
-				return mapper.orderItemsResponseDto(product, item);
-			} catch (Exception e) {
-				throw new ValidationException("There is no product with that id");
-			}
+			Product product = productFeignClient.getProductById(item.getIdproduct(), token);
+			return mapper.orderItemsResponseDto(product, item);
 		}).collect(Collectors.toList());
 		return items;
 	}
 
-	public String cancelOrder(String ordernumber, String token) {
+	public Response cancelOrder(String ordernumber, String token) {
 		Order order = orderRepository.findOrderByOrdernumber(ordernumber);
 		if (Objects.nonNull(order)) {
 			if (!order.getOrderstatus().equals(StatusOrder.Sent)) {
 				if (order.getOrderstatus().equals(StatusOrder.Cancelled)
 						|| order.getOrderstatus().equals(StatusOrder.Delivered)) {
+					logger.info("Order is already cancel or delivered");
 					throw new ValidationException("Order is already cancel or delivered");
 				}
 				order.setOrderstatus(StatusOrder.Cancelled);
-				List<OrderItemsResponseDTO> items = getItemsWithProductInformation(order.getIdcart(),
-						order.getOrdernumber(), token);
+				List<OrderItemsResponseDTO> items = getItemsWithProductInformation(order.getIdcart(), ordernumber,
+						token);
 				for (OrderItemsResponseDTO item : items) {
 					productFeignClient.updateStockOrder(item.getProductQuantity(), item.getSku(), "cancelOrder", token);
 				}
 				orderRepository.save(order);
 				logger.info("Order successfully canceled");
-				return "order was cancel successfully!";
+				Response response = new Response("Order was cancel successfully!", null);
+				return response;
 			}
 			throw new ValidationException("Cant cancel order, is already sent!");
 		}
 		throw new ValidationException("Does not exists order with number: " + ordernumber);
 	}
 
-	public OrderResponseDTO getOrderByOrderNumber(String ordernumber, String token) {
+	public Response getOrderByOrderNumber(String ordernumber, String token) {
 		Order order = orderRepository.findOrderByOrdernumber(ordernumber);
 		if (Objects.nonNull(order)) {
 			List<OrderItemsResponseDTO> items = getItemsWithProductInformation(order.getIdcart(), ordernumber, token);
-			return mapper.mapperToOrderResponseDto(order, order.getTotalorderprice(), items);
+			OrderResponseDTO orderResponseDTO = mapper.mapperToOrderResponseDto(order, order.getTotalorderprice(),
+					items);
+			return new Response("Retrieved successfully", orderResponseDTO);
 		}
 		throw new ValidationException("Does not exists order with number: " + ordernumber);
 	}
 
-	public List<OrderResponseDTO> getAllorders(String token) {
+	public Response getAllorders(String token) {
 		List<OrderResponseDTO> orders = orderRepository.findAll().stream().map(order -> {
 			List<OrderItemsResponseDTO> items = getItemsWithProductInformation(order.getIdcart(),
 					order.getOrdernumber(), token);
@@ -111,7 +107,8 @@ public class OrderService {
 		}).collect(Collectors.toList());
 
 		if (!orders.isEmpty()) {
-			return orders;
+			Response response = new Response("Retrieved successfully", orders);
+			return response;
 		}
 		throw new ValidationException("There are not orders saved!");
 	}

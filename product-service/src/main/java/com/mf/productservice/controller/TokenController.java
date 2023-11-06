@@ -31,7 +31,7 @@ public class TokenController {
 	}
 	
 	private ResponseEntity<String> fallBackGenerateToken(RuntimeException ex){
-		logger.info("Fallback is executed because user service is down ", ex.getMessage());
-		return new ResponseEntity<>("Oops! Something went wrong, please try again later!", HttpStatus.OK);
+		logger.info("FallbackToken is executed because user service is down ", ex.getMessage());
+		return new ResponseEntity<>("FallbackToken - Oops! Something went wrong, please try again later!", HttpStatus.NOT_FOUND);
 	}
 }

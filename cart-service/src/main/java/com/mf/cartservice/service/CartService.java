@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.mf.cartservice.dto.Mapper;
@@ -33,6 +35,7 @@ public class CartService {
 	private final UserFeignClient userFeignClient;
 	private final ProductFeignClient productFeignClient;
 	private final Mapper mapper;
+	private Logger logger = LoggerFactory.getLogger(CartService.class);
 
 	public Response createCart(Long iduser) {
 		Cart cart = new Cart();
@@ -42,6 +45,7 @@ public class CartService {
 			cartRepository.save(cart);
 			return new Response("Cart created", cart);
 		}
+		logger.info("User with id: " + iduser + " does not exists");
 		throw new ValidationException("User with id: " + iduser + " does not exists");
 	}
 
@@ -125,14 +129,15 @@ public class CartService {
 		return response;
 	}
 
-	public List<CartResponseDTO> getallCartItems(Long idcart, String token) {
+	public Response getallCartItems(Long idcart, String token) {
 		List<CartResponseDTO> items = cartItemRepository.findAllbyIdcart(idcart).stream().map(item -> {
 			Product product = productFeignClient.getProductById(item.getIdproduct(), token);
 			return Mapper.cartResponseDto(product, item);
 		}).collect(Collectors.toList());
 
 		if (!items.isEmpty()) {
-			return items;
+			Response response = new Response("Retrieved successfully", items);
+			return response;
 		}
 		throw new ValidationException("There aren't items for that idCart or does not exist that cart");
 	}

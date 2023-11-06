@@ -50,7 +50,6 @@ public class Mapper {
 	public OrderResponseDTO mapperToOrderResponseDto(Order order, BigDecimal totalOrderPrice,
 			List<OrderItemsResponseDTO> items) {
 		OrderResponseDTO orderResponse = new OrderResponseDTO();
-		orderResponse.setMessage("Created successfully");
 	 	orderResponse.setOrdernumber(order.getOrdernumber());
 	 	orderResponse.setOrderstatus(order.getOrderstatus());
 	 	orderResponse.setPaymentstatus(order.getPaymentstatus());

@@ -1,7 +1,5 @@
 package com.mf.orderservice.controller;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -13,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mf.orderservice.dto.response.OrderResponseDTO;
+import com.mf.orderservice.dto.response.Response;
 import com.mf.orderservice.service.OrderService;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -28,30 +26,34 @@ public class OrderController {
 	private final OrderService orderService;
 	private Logger logger = LoggerFactory.getLogger(OrderController.class);
 	
-	@CircuitBreaker(name = "createOrder", fallbackMethod = "fallBackOpenfeignClients")
+	@CircuitBreaker(name = "createOrder", fallbackMethod = "fallback")
 	@PostMapping("/createOrder")
-	public OrderResponseDTO createOrder(@RequestParam Long idcart, HttpServletRequest request) {
-		return orderService.createOrder(idcart, request.getHeader("Authorization"));
+	public ResponseEntity<Response> createOrder(@RequestParam Long idcart, HttpServletRequest request) {
+		Response response = orderService.createOrder(idcart, request.getHeader("Authorization"));
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 	
-	@CircuitBreaker(name = "cancelOrder", fallbackMethod = "fallBackOpenfeignClients")
+	@CircuitBreaker(name = "cancelOrder", fallbackMethod = "fallback")
 	@PostMapping("/cancelOrder")
-	public String cancelOrder(@RequestParam String ordernumber, HttpServletRequest request) {
-		return orderService.cancelOrder(ordernumber, request.getHeader("Authorization"));
+	public ResponseEntity<Response> cancelOrder(@RequestParam String ordernumber, HttpServletRequest request) {
+		Response response = orderService.cancelOrder(ordernumber, request.getHeader("Authorization"));
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@CircuitBreaker(name = "getOrderByOrderNumber", fallbackMethod = "fallBackOpenfeignClients")
+	@CircuitBreaker(name = "getOrderByOrderNumber", fallbackMethod = "fallback")
 	@GetMapping("/getOrderByOrderNumber/{ordernumber}")
-	public OrderResponseDTO getOrderByOrderNumber(@PathVariable String ordernumber, HttpServletRequest request) {
-		return orderService.getOrderByOrderNumber(ordernumber, request.getHeader("Authorization"));
+	public ResponseEntity<Response> getOrderByOrderNumber(@PathVariable String ordernumber, HttpServletRequest request) {
+		Response response = orderService.getOrderByOrderNumber(ordernumber, request.getHeader("Authorization"));
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@CircuitBreaker(name = "getAllorders", fallbackMethod = "fallBackOpenfeignClients")
+	@CircuitBreaker(name = "getAllorders", fallbackMethod = "fallback")
 	@GetMapping("/getAllorders")
-	public List<OrderResponseDTO> getAllorders(HttpServletRequest request) {
-		return orderService.getAllorders(request.getHeader("Authorization"));
+	public ResponseEntity<Response> getAllorders(HttpServletRequest request) {
+		Response response = orderService.getAllorders(request.getHeader("Authorization"));
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@PostMapping("/updatePayment/{ordernumber}")
 	public String updatePayment(@PathVariable String ordernumber, @RequestParam String status) {
 		return orderService.updatePayment(ordernumber,status);
@@ -60,10 +62,10 @@ public class OrderController {
 	@PostMapping("/updateOrder/{ordernumber}")
 	public String updateOrder(@PathVariable String ordernumber, @RequestParam String status) {
 		return orderService.updateOrder(ordernumber,status);
-	}
-	
-	private ResponseEntity<String> fallBackOpenfeignClients(RuntimeException ex){
-		logger.info("Fallback is executed because open feign client is down ", ex.getMessage());
-		return new ResponseEntity<>("Oops! Something went wrong, please try again later!", HttpStatus.OK);
 	}	
+	
+	private ResponseEntity<String> fallback(RuntimeException ex) {
+		logger.info("FallbackOrder is executed because open feign client is down ", ex.getMessage());
+		return new ResponseEntity<>("FallbackOrder - Oops! Something went wrong, please try again later!", HttpStatus.NOT_FOUND);
+	}
 }
