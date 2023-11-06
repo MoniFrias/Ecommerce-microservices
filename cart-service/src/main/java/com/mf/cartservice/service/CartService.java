@@ -41,14 +41,18 @@ public class CartService {
 		Cart cart = new Cart();
 		User user = userFeignClient.getUserById(iduser);
 		if (Objects.nonNull(user)) {
-			cart.setIduser(iduser);
-			cartRepository.save(cart);
-			return new Response("Cart created", cart);
+			Cart existigCartByIdUser = cartRepository.findByIdUser(iduser);
+			if(Objects.isNull(existigCartByIdUser)) {
+				cart.setIduser(iduser);
+				cartRepository.save(cart);
+				return new Response("Cart created", cart);
+			}
+			throw new ValidationException("Already exists a cart for user: " + iduser );
 		}
 		logger.info("User with id: " + iduser + " does not exists");
 		throw new ValidationException("User with id: " + iduser + " does not exists");
 	}
-
+	
 	public Response addProductToCart(AddProductRequestDto addProductRequestDTO, String token) {
 		Optional<Cart> existingCart = cartRepository.findById(addProductRequestDTO.getIdcart());
 		if (existingCart.isPresent()) {
@@ -100,23 +104,28 @@ public class CartService {
 	private Response updateQuantity(Long idcart, Long idproduct, String action, String token) {
 		Response response = new Response();
 		List<CartItem> existingCartItem = cartItemRepository.findByIdCartAndIdproduct(idcart, idproduct);
-		for (CartItem cartItem : existingCartItem) {
-			if (cartItem.getOrdernumber().equals("Pending")) {
-				Long newQuantity = 0L;
-				if (action.equals("increase")) {
-					newQuantity = cartItem.getProductquantity() + 1;
-				} else if (action.equals("decrease")) {
-					newQuantity = cartItem.getProductquantity() - 1;
+		if(!existingCartItem.isEmpty()) {
+			for (CartItem cartItem : existingCartItem) {
+				if (cartItem.getOrdernumber().equals("Pending")) {
+					Long newQuantity = 0L;
+					if (action.equals("increase")) {
+						newQuantity = cartItem.getProductquantity() + 1;
+					} else if (action.equals("decrease")) {
+						newQuantity = cartItem.getProductquantity() - 1;
+					}
+					Product existingProduct = productFeignClient.getProductById(idproduct, token);
+					BigDecimal totalPrice = existingProduct.getPriceperunit().multiply(new BigDecimal(newQuantity));
+					cartItem.setProductquantity(newQuantity);
+					cartItem.setTotalprice(totalPrice);
+					cartItemRepository.save(cartItem);
+					response = new Response("Quantity updated", cartItem);
+					return response;
 				}
-				Product existingProduct = productFeignClient.getProductById(idproduct, token);
-				BigDecimal totalPrice = existingProduct.getPriceperunit().multiply(new BigDecimal(newQuantity));
-				cartItem.setProductquantity(newQuantity);
-				cartItem.setTotalprice(totalPrice);
-				cartItemRepository.save(cartItem);
-				response = new Response("Quantity updated", cartItem);
-			}
+				throw new ValidationException("There is not products to update");
+			}			
 		}
-		return response;
+		throw new ValidationException("There is not products with that values, validate");
+		
 	}
 
 	public Response increaseProductQuantityFromCart(Long idcart, Long idproduct, String token) {
