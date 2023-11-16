@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mf.productservice.dto.request.AuthRequest;
 import com.mf.productservice.dto.response.AuthResponse;
-import com.mf.productservice.service.authService;
+import com.mf.productservice.service.AuthService;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TokenController {
 
-	private final authService authService;
+	private final AuthService authService;
 	private Logger logger = LoggerFactory.getLogger(TokenController.class);
 	
 	@CircuitBreaker(name = "generateToken", fallbackMethod = "fallBackGenerateToken")

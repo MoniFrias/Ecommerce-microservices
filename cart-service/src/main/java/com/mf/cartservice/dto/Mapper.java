@@ -14,7 +14,7 @@ import com.mf.cartservice.model.Product;
 @Component
 public class Mapper {
 
-	public static CartResponseDTO cartResponseDto(Product existingProduct, CartItem newItem) {
+	public CartResponseDTO cartResponseDto(Product existingProduct, CartItem newItem) {
 		CartResponseDTO response = new CartResponseDTO();
 		response.setIdcartitem(newItem.getIdcartitem());
 		response.setIdproduct(existingProduct.getIdproduct());

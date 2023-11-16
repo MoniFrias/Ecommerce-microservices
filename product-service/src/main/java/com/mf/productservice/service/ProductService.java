@@ -28,6 +28,7 @@ public class ProductService {
 
 	private final RepositoryProduct repositoryProduct;
 	private final RepositoryCategory repositoryCategory;
+	private final Mapper mapper;
 
 	private static Logger logger = LogManager.getLogger(ProductService.class);
 
@@ -37,7 +38,7 @@ public class ProductService {
 		if (Objects.isNull(productFound)) {
 			Category categoryFound = repositoryCategory.findCategoryByCategoryname(product.getCategoryname());
 			if (Objects.nonNull(categoryFound)) {
-				Product newProduct = Mapper.productRequestDtoToProductEntity(product, categoryFound);
+				Product newProduct = mapper.productRequestDtoToProductEntity(product, categoryFound);
 				repositoryProduct.save(newProduct);
 				logger.info("Product saved!");
 				return new Response(true, "Product was created successfully");
@@ -63,7 +64,7 @@ public class ProductService {
 	public List<ProductResponseDTO> getAllProducts() {
 		List<ProductResponseDTO> listProducts = repositoryProduct.findAll().stream().map(product -> {
 			Category category = repositoryCategory.findCategoryByIdcategory(product.getCategory().getIdcategory());
-			ProductResponseDTO responseProduct = Mapper.productToProductResponseDto(product,
+			ProductResponseDTO responseProduct = mapper.productToProductResponseDto(product,
 					category.getCategoryname());
 			return responseProduct;
 		}).collect(Collectors.toList());
@@ -76,7 +77,7 @@ public class ProductService {
 
 	public List<CategoryResponseDTO> getAllCategories() {
 		List<CategoryResponseDTO> categories = repositoryCategory.findAll().stream().map(category -> {
-			CategoryResponseDTO categoryResponse = Mapper.categoryToCategoryResponseDto(category);
+			CategoryResponseDTO categoryResponse = mapper.categoryToCategoryResponseDto(category);
 			return categoryResponse;
 		}).collect(Collectors.toList());
 
@@ -95,7 +96,7 @@ public class ProductService {
 		Product productFound = repositoryProduct.findProductByIdsku(sku);
 		if (Objects.nonNull(productFound)) {
 			Category category = repositoryCategory.findCategoryByIdcategory(productFound.getCategory().getIdcategory());
-			return Mapper.productToProductResponseDto(productFound, category.getCategoryname());
+			return mapper.productToProductResponseDto(productFound, category.getCategoryname());
 		}
 		throw new ValidationException("There is no product with that sku");
 	}
@@ -104,10 +105,9 @@ public class ProductService {
 		Product productFound = repositoryProduct.findProductByProductname(productName);
 		if (Objects.nonNull(productFound)) {
 			Category category = repositoryCategory.findCategoryByIdcategory(productFound.getCategory().getIdcategory());
-			return Mapper.productToProductResponseDto(productFound, category.getCategoryname());
+			return mapper.productToProductResponseDto(productFound, category.getCategoryname());
 		}
 		throw new ValidationException("There is no product with that name");
-
 	}
 
 	public List<ProductResponseDTO> getProductByBrand(String brandName) {
@@ -115,7 +115,7 @@ public class ProductService {
 				.map(product -> {
 					Category category = repositoryCategory
 							.findCategoryByIdcategory(product.getCategory().getIdcategory());
-					ProductResponseDTO responseProduct = Mapper.productToProductResponseDto(product,
+					ProductResponseDTO responseProduct = mapper.productToProductResponseDto(product,
 							category.getCategoryname());
 					return responseProduct;
 
@@ -166,8 +166,8 @@ public class ProductService {
 			Category categoryFound = repositoryCategory
 					.findCategoryByIdcategory(productFound.getCategory().getIdcategory());
 			if (Objects.nonNull(categoryFound)) {
-				Product mapperProduct = Mapper.productRequestDtoToProductEntity(product, categoryFound);
-				Product productUpdated = Mapper.updateValuesProduct(productFound, mapperProduct);
+				Product mapperProduct = mapper.productRequestDtoToProductEntity(product, categoryFound);
+				Product productUpdated = mapper.updateValuesProduct(productFound, mapperProduct);
 				repositoryProduct.save(productUpdated);
 				return new Response(true, "Product was updated successfully");
 			}

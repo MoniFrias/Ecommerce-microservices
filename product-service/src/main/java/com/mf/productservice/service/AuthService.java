@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class authService {
+public class AuthService {
 	
 	private final UserFeignClient userFeignClient;
 	private final AuthenticationManager authenticationManeger;

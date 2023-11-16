@@ -1,5 +1,7 @@
 package com.mf.productservice.dto;
 
+import org.springframework.stereotype.Component;
+
 import com.mf.productservice.dto.request.ProductRequestDTO;
 import com.mf.productservice.dto.request.UpdateProductRequestDTO;
 import com.mf.productservice.dto.response.CategoryResponseDTO;
@@ -7,9 +9,10 @@ import com.mf.productservice.dto.response.ProductResponseDTO;
 import com.mf.productservice.entity.Category;
 import com.mf.productservice.entity.Product;
 
+@Component
 public class Mapper {
 	
-	public static Product productRequestDtoToProductEntity(ProductRequestDTO productDto, Category category) {
+	public Product productRequestDtoToProductEntity(ProductRequestDTO productDto, Category category) {
 		Product product =  new Product();
 		product.setProductname(productDto.getProductname());
 		product.setIdsku(productDto.getIdsku());
@@ -21,7 +24,7 @@ public class Mapper {
 		return product;
 	}
 	
-	public static Product productRequestDtoToProductEntity(UpdateProductRequestDTO productDto, Category category) {
+	public Product productRequestDtoToProductEntity(UpdateProductRequestDTO productDto, Category category) {
 		Product product =  new Product();
 		product.setProductname(productDto.getProductname());
 		product.setDescription(productDto.getDescription());
@@ -32,7 +35,7 @@ public class Mapper {
 		return product;
 	}
 
-	public static ProductResponseDTO productToProductResponseDto(Product product, String categoryname) {
+	public ProductResponseDTO productToProductResponseDto(Product product, String categoryname) {
 		ProductResponseDTO responseProduct = new ProductResponseDTO();
 		responseProduct.setProductname(product.getProductname());
 		responseProduct.setIdsku(product.getIdsku());
@@ -42,13 +45,13 @@ public class Mapper {
 		return responseProduct;
 	}
 
-	public static CategoryResponseDTO categoryToCategoryResponseDto(Category category) {
+	public CategoryResponseDTO categoryToCategoryResponseDto(Category category) {
 		CategoryResponseDTO categoryResponse = new CategoryResponseDTO();
 		categoryResponse.setCategoryname(category.getCategoryname());
 		return categoryResponse;
 	}
 
-	public static Product updateValuesProduct(Product productFound, Product productUpdated) {
+	public Product updateValuesProduct(Product productFound, Product productUpdated) {
 		productFound.setProductname(productUpdated.getProductname());
 		productFound.setDescription(productUpdated.getDescription());
 		productFound.setBrandname(productUpdated.getBrandname());

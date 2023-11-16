@@ -3,9 +3,11 @@ package com.mf.productservice.dto.request;
 import java.math.BigDecimal;
 
 import jakarta.annotation.Nonnull;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class UpdateProductRequestDTO {
 
 	@Nonnull

@@ -66,8 +66,8 @@ public class CartService {
 						CartItem newItem = mapper.mapperToCartItem(addProductRequestDTO, existingProduct, existingCart);
 
 						cartItemRepository.save(newItem);
-						CartResponseDTO cartResponseDTO = Mapper.cartResponseDto(existingProduct, newItem);
-						Response response = new Response("Product added successfully to the cart", cartResponseDTO);
+						CartResponseDTO cartResponseDTO = mapper.cartResponseDto(existingProduct, newItem);
+						Response response = new Response("Product added successfully to the cart cart eempty", cartResponseDTO);
 						return response;
 					} else {
 						Response response = new Response();
@@ -80,15 +80,15 @@ public class CartService {
 								cartItem.setProductquantity(newQuantity);
 								cartItem.setTotalprice(totalPrice);
 								cartItemRepository.save(cartItem);
-								CartResponseDTO cartResponseDTO = Mapper.cartResponseDto(existingProduct, cartItem);
-								response = new Response("Product added successfully to the cart", cartResponseDTO);
+								CartResponseDTO cartResponseDTO = mapper.cartResponseDto(existingProduct, cartItem);
+								response = new Response("Product added successfully to the cart pending", cartResponseDTO);
 								return response;
 							} else {
 								CartItem newItem = mapper.mapperToCartItem(addProductRequestDTO, existingProduct,
 										existingCart);
 								cartItemRepository.save(newItem);
-								CartResponseDTO cartResponseDTO = Mapper.cartResponseDto(existingProduct, newItem);
-								response = new Response("Product added successfully to the cart", cartResponseDTO);
+								CartResponseDTO cartResponseDTO = mapper.cartResponseDto(existingProduct, newItem);
+								response = new Response("Product added successfully to the cart validar", cartResponseDTO);
 								return response;
 							}
 						}
@@ -141,7 +141,7 @@ public class CartService {
 	public Response getallCartItems(Long idcart, String token) {
 		List<CartResponseDTO> items = cartItemRepository.findAllbyIdcart(idcart).stream().map(item -> {
 			Product product = productFeignClient.getProductById(item.getIdproduct(), token);
-			return Mapper.cartResponseDto(product, item);
+			return mapper.cartResponseDto(product, item);
 		}).collect(Collectors.toList());
 
 		if (!items.isEmpty()) {
